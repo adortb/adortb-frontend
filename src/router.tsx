@@ -1,6 +1,9 @@
 import { Navigate } from 'react-router-dom'
-import MainLayout from './layouts/MainLayout'
-import Login from './pages/Login'
+import type { UserRole } from './store/auth'
+import { useAuthStore } from './store/auth'
+
+// Admin pages
+import AdminLayout from './portals/admin/AdminLayout'
 import Dashboard from './pages/Dashboard'
 import PublisherList from './pages/PublisherList'
 import AdvertiserList from './pages/AdvertiserList'
@@ -9,23 +12,65 @@ import CreativeList from './pages/CreativeList'
 import AdSlotList from './pages/AdSlotList'
 import Reports from './pages/Reports'
 
+// Advertiser portal pages
+import AdvertiserLayout from './portals/advertiser/AdvertiserLayout'
+import AdvertiserDashboard from './portals/advertiser/pages/AdvertiserDashboard'
+import AdvertiserAccount from './portals/advertiser/pages/AdvertiserAccount'
+import AdvertiserRecharge from './portals/advertiser/pages/AdvertiserRecharge'
+import AdvertiserCampaigns from './portals/advertiser/pages/AdvertiserCampaigns'
+import CampaignEditor from './portals/advertiser/pages/CampaignEditor'
+import AdvertiserCreatives from './portals/advertiser/pages/AdvertiserCreatives'
+import AdvertiserReports from './portals/advertiser/pages/AdvertiserReports'
+
+// Publisher portal pages
+import PublisherLayout from './portals/publisher/PublisherLayout'
+import PublisherDashboard from './portals/publisher/pages/PublisherDashboard'
+import PublisherAdSlots from './portals/publisher/pages/PublisherAdSlots'
+import AdSlotEditor from './portals/publisher/pages/AdSlotEditor'
+import PublisherReports from './portals/publisher/pages/PublisherReports'
+import PublisherSettlement from './portals/publisher/pages/PublisherSettlement'
+import PublisherWithdraw from './portals/publisher/pages/PublisherWithdraw'
+
+// Login page
+import Login from './pages/Login'
+
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token')
   if (!token) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
+function RequireRole({ role, children }: { role: UserRole; children: React.ReactNode }) {
+  const { token, role: userRole } = useAuthStore()
+  if (!token) return <Navigate to="/login" replace />
+  if (userRole !== role) return <Navigate to="/403" replace />
+  return <>{children}</>
+}
+
+function Forbidden403() {
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+      <h1 style={{ fontSize: 48, fontWeight: 'bold', color: '#f5222d' }}>403</h1>
+      <p style={{ color: '#666' }}>您没有访问该页面的权限</p>
+      <a href="/login" style={{ color: '#1677ff' }}>返回登录</a>
+    </div>
+  )
+}
+
 const routes = [
   { path: '/login', element: <Login /> },
+  { path: '/403', element: <Forbidden403 /> },
+
+  // Admin portal
   {
-    path: '/',
+    path: '/admin',
     element: (
-      <RequireAuth>
-        <MainLayout />
-      </RequireAuth>
+      <RequireRole role="admin">
+        <AdminLayout />
+      </RequireRole>
     ),
     children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { index: true, element: <Navigate to="/admin/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'publishers', element: <PublisherList /> },
       { path: 'advertisers', element: <AdvertiserList /> },
@@ -35,7 +80,66 @@ const routes = [
       { path: 'reports', element: <Reports /> },
     ],
   },
-  { path: '*', element: <Navigate to="/" replace /> },
+
+  // Advertiser portal
+  {
+    path: '/advertiser',
+    element: (
+      <RequireRole role="advertiser">
+        <AdvertiserLayout />
+      </RequireRole>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/advertiser/dashboard" replace /> },
+      { path: 'dashboard', element: <AdvertiserDashboard /> },
+      { path: 'account', element: <AdvertiserAccount /> },
+      { path: 'recharge', element: <AdvertiserRecharge /> },
+      { path: 'campaigns', element: <AdvertiserCampaigns /> },
+      { path: 'campaigns/new', element: <CampaignEditor /> },
+      { path: 'campaigns/:id/edit', element: <CampaignEditor /> },
+      { path: 'creatives', element: <AdvertiserCreatives /> },
+      { path: 'reports', element: <AdvertiserReports /> },
+    ],
+  },
+
+  // Publisher portal
+  {
+    path: '/publisher',
+    element: (
+      <RequireRole role="publisher">
+        <PublisherLayout />
+      </RequireRole>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/publisher/dashboard" replace /> },
+      { path: 'dashboard', element: <PublisherDashboard /> },
+      { path: 'adslots', element: <PublisherAdSlots /> },
+      { path: 'adslots/new', element: <AdSlotEditor /> },
+      { path: 'adslots/:id/edit', element: <AdSlotEditor /> },
+      { path: 'reports', element: <PublisherReports /> },
+      { path: 'settlement', element: <PublisherSettlement /> },
+      { path: 'withdraw', element: <PublisherWithdraw /> },
+    ],
+  },
+
+  // Legacy redirect: 旧路由兼容
+  {
+    path: '/',
+    element: (
+      <RequireAuth>
+        <RoleRedirect />
+      </RequireAuth>
+    ),
+  },
+
+  { path: '*', element: <Navigate to="/login" replace /> },
 ]
+
+function RoleRedirect() {
+  const role = useAuthStore((s) => s.role)
+  if (role === 'advertiser') return <Navigate to="/advertiser/dashboard" replace />
+  if (role === 'publisher') return <Navigate to="/publisher/dashboard" replace />
+  return <Navigate to="/admin/dashboard" replace />
+}
 
 export default routes

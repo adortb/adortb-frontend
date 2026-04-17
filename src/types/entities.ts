@@ -102,4 +102,53 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string
   username: string
+  role: 'admin' | 'advertiser' | 'publisher'
+  account_id: string
+}
+
+// 计费相关
+export interface AccountBalance {
+  accountId: string
+  balance: number
+  frozenAmount: number
+  totalRecharge: number
+  totalSpend: number
+}
+
+export interface RechargeRecord {
+  id: string
+  accountId: string
+  amount: number
+  status: 'pending' | 'success' | 'failed'
+  createdAt: string
+}
+
+export interface SettlementRecord {
+  id: string
+  publisherId: string
+  date: string
+  amount: number
+  status: 'pending' | 'paid'
+  createdAt: string
+}
+
+export interface WithdrawRecord {
+  id: string
+  publisherId: string
+  amount: number
+  bankAccount: string
+  bankName: string
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: string
+}
+
+// 审核相关
+export type ReviewStatus = 'pending_review' | 'approved' | 'rejected'
+
+export interface CreativeReview {
+  id: string
+  creativeId: number
+  status: ReviewStatus
+  reason?: string
+  reviewedAt?: string
 }
