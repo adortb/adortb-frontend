@@ -15,6 +15,9 @@ const roleHomePath: Record<UserRole, string> = {
   admin: '/admin/dashboard',
   advertiser: '/advertiser/dashboard',
   publisher: '/publisher/dashboard',
+  agency_admin: '/agency/dashboard',
+  media_buyer: '/agency/dashboard',
+  analyst: '/agency/dashboard',
 }
 
 export default function Login() {

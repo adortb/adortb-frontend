@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type UserRole = 'admin' | 'advertiser' | 'publisher'
+export type UserRole = 'admin' | 'advertiser' | 'publisher' | 'agency_admin' | 'media_buyer' | 'analyst'
 
 interface AuthState {
   token: string | null

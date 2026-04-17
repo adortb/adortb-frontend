@@ -31,8 +31,20 @@ import PublisherReports from './portals/publisher/pages/PublisherReports'
 import PublisherSettlement from './portals/publisher/pages/PublisherSettlement'
 import PublisherWithdraw from './portals/publisher/pages/PublisherWithdraw'
 
+// Agency portal pages
+import AgencyLayout from './portals/agency/AgencyLayout'
+import AgencyDashboard from './portals/agency/AgencyDashboard'
+import ClientManagement from './portals/agency/ClientManagement'
+import ConsolidatedReports from './portals/agency/ConsolidatedReports'
+import BatchOps from './portals/agency/BatchOps'
+import SubAccountManagement from './portals/agency/SubAccountManagement'
+import Commissions from './portals/agency/Commissions'
+import WhiteLabel from './portals/agency/WhiteLabel'
+
 // Login page
 import Login from './pages/Login'
+
+const AGENCY_ROLES: UserRole[] = ['agency_admin', 'media_buyer', 'analyst']
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token')
@@ -44,6 +56,13 @@ function RequireRole({ role, children }: { role: UserRole; children: React.React
   const { token, role: userRole } = useAuthStore()
   if (!token) return <Navigate to="/login" replace />
   if (userRole !== role) return <Navigate to="/403" replace />
+  return <>{children}</>
+}
+
+function RequireAgencyRole({ children }: { children: React.ReactNode }) {
+  const { token, role } = useAuthStore()
+  if (!token) return <Navigate to="/login" replace />
+  if (!role || !AGENCY_ROLES.includes(role)) return <Navigate to="/403" replace />
   return <>{children}</>
 }
 
@@ -122,6 +141,26 @@ const routes = [
     ],
   },
 
+  // Agency portal
+  {
+    path: '/agency',
+    element: (
+      <RequireAgencyRole>
+        <AgencyLayout />
+      </RequireAgencyRole>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/agency/dashboard" replace /> },
+      { path: 'dashboard', element: <AgencyDashboard /> },
+      { path: 'clients', element: <ClientManagement /> },
+      { path: 'reports', element: <ConsolidatedReports /> },
+      { path: 'batch', element: <BatchOps /> },
+      { path: 'subaccounts', element: <SubAccountManagement /> },
+      { path: 'commissions', element: <Commissions /> },
+      { path: 'white-label', element: <WhiteLabel /> },
+    ],
+  },
+
   // Legacy redirect: 旧路由兼容
   {
     path: '/',
@@ -139,6 +178,7 @@ function RoleRedirect() {
   const role = useAuthStore((s) => s.role)
   if (role === 'advertiser') return <Navigate to="/advertiser/dashboard" replace />
   if (role === 'publisher') return <Navigate to="/publisher/dashboard" replace />
+  if (role && AGENCY_ROLES.includes(role)) return <Navigate to="/agency/dashboard" replace />
   return <Navigate to="/admin/dashboard" replace />
 }
 
